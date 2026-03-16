@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+# *.pkl (Including models for full functionality)
+# collected_traffic.csv (Including sample data?)
+
+# Large Datasets
+dataset/MachineLearningCVE/
+
+
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
