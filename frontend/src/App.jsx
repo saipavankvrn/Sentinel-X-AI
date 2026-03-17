@@ -138,7 +138,8 @@ function App() {
   const getBadgeClass = (status) => {
     switch (status) {
       case 'SAFE': return 'status-badge badge-safe';
-      case 'WARNING': return 'status-badge badge-warning';
+      case 'WARNING':
+      case 'DETECTED': return 'status-badge badge-detected';
       case 'BLOCKED': return 'status-badge badge-blocked';
       default: return 'status-badge badge-safe';
     }
@@ -146,7 +147,8 @@ function App() {
 
   const getRowClass = (status) => {
     switch (status) {
-      case 'WARNING': return 'main-row row-warning';
+      case 'WARNING':
+      case 'DETECTED': return 'main-row row-detected';
       case 'BLOCKED': return 'main-row row-blocked';
       default: return 'main-row';
     }
@@ -210,7 +212,7 @@ function App() {
               </thead>
               <tbody>
                 {alerts.map((alert, index) => {
-                  const isExpandable = alert.status === 'WARNING' || alert.status === 'BLOCKED';
+                  const isExpandable = alert.status === 'WARNING' || alert.status === 'BLOCKED' || alert.status === 'DETECTED';
                   const rowId = `${alert.timestamp}-${alert.source_ip}-${alert.destination_ip}-${alert.packet_length}`;
                   const isExpanded = expandedRows.includes(rowId);
 
@@ -228,7 +230,8 @@ function App() {
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span className={getBadgeClass(alert.status)}>
-                              {alert.status}
+                              {alert.status === 'BLOCKED' ? 'ATTACK BLOCKED' : 
+                               alert.status === 'DETECTED' ? 'DETECTED' : alert.status}
                             </span>
                             {isExpandable && (
                               <svg 

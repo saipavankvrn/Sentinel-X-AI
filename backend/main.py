@@ -20,7 +20,7 @@ class Alert(BaseModel):
     source_ip: str
     destination_ip: str
     protocol: str = "Unknown"
-    packet_length: int
+    packet_length: int = 0
     alert_type: str
     status: str
     explanation: str = "No explanation provided."

@@ -1,7 +1,7 @@
 import platform
 import subprocess
 
-def block_attacker_ip(ip_address):
+def block_ip(ip_address):
     """
     Automatically blocks a malicious IP address using the system's firewall.
     
@@ -11,29 +11,25 @@ def block_attacker_ip(ip_address):
     Returns:
         bool: True if successfully blocked, False otherwise.
     """
-    print(f"Blocking attacker IP: {ip_address}")
-    
     current_os = platform.system().lower()
     
     try:
         if current_os == "linux":
             # Execute Linux iptables block rule
-            # Note: The script must be run with sudo/root privileges for this to work
             cmd = ["iptables", "-A", "INPUT", "-s", ip_address, "-j", "DROP"]
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"✅ Successfully blocked {ip_address} via Linux iptables.")
+            print(f"Blocked IP: {ip_address}")
             return True
             
         elif current_os == "windows":
-            # Execute Windows netsh firewall rule
-            # Note: The script must be run as Administrator for this to work
-            rule_name = f"Block_SentinelX_{ip_address}"
+            # Execute Windows netsh firewall rule as per Sentinel-X requirements
+            rule_name = f"SentinelX_Block_{ip_address}"
             cmd = [
                 "netsh", "advfirewall", "firewall", "add", "rule",
                 f"name={rule_name}", "dir=in", "action=block", f"remoteip={ip_address}"
             ]
             subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"✅ Successfully blocked {ip_address} via Windows Defender Firewall.")
+            print(f"Blocked IP: {ip_address}")
             return True
             
         else:
@@ -46,6 +42,9 @@ def block_attacker_ip(ip_address):
     except Exception as e:
         print(f"❌ An error occurred while trying to block {ip_address}: {str(e)}")
         return False
+
+# Alias for backward compatibility if needed
+block_attacker_ip = block_ip
 
 def unblock_ip(ip_address):
     """
@@ -62,7 +61,7 @@ def unblock_ip(ip_address):
             return True
             
         elif current_os == "windows":
-            rule_name = f"Block_SentinelX_{ip_address}"
+            rule_name = f"SentinelX_Block_{ip_address}"
             cmd = [
                 "netsh", "advfirewall", "firewall", "delete", "rule",
                 f"name={rule_name}"

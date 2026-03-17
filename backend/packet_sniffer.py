@@ -3,7 +3,7 @@ from datetime import datetime
 from scapy.all import sniff
 from feature_extractor import extract_features
 from detection_engine import DetectionEngine
-from response_engine import block_attacker_ip
+from response_engine import block_ip
 from flow_tracker import FlowTracker
 
 # Initialize the Machine Learning Detection Engine
@@ -65,18 +65,16 @@ def packet_callback(packet):
         explainer_context = {**features, **flow_features}
         explanation = get_threat_explanation(explainer_context)
         
-        # 5. Activate the Response Engine to block the malicious IP
-        block_success = block_attacker_ip(src_ip)
-        alert_status = "BLOCKED" if block_success else "WARNING"
+        # 5. Send the alert to the FastAPI backend
+        alert_status = "BLOCKED" # We assume intent, or verify below
         
-        # 6. Send the alert to the FastAPI backend
         alert_data = {
             "source_ip": src_ip,
             "destination_ip": features.get("dst_ip", "Unknown"),
             "protocol": protocol_str,
             "packet_length": features.get("packet_length", 0),
             "alert_type": "THREAT_DETECTED",
-            "status": alert_status,
+            "status": "BLOCKED",
             "explanation": explanation,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -85,6 +83,17 @@ def packet_callback(packet):
             requests.post(API_URL, json=alert_data, timeout=2)
         except:
             pass
+
+        # 6. Activate the Response Engine to physically block the malicious IP
+        block_success = block_ip(src_ip)
+        
+        if not block_success:
+            # If blocking failed (e.g. no admin rights), update the alert status to WARNING
+            update_data = {**alert_data, "status": "WARNING", "explanation": f"{explanation} (Note: Automatic firewall block failed. Please check permissions.)"}
+            try:
+                requests.post(API_URL, json=update_data, timeout=1)
+            except:
+                pass
             
         # Add to the set so we don't trigger the firewall rule 10,000 times
         blocked_ips.add(src_ip)
