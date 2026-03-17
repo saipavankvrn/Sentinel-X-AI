@@ -24,6 +24,7 @@ class Alert(BaseModel):
     alert_type: str
     status: str
     explanation: str = "No explanation provided."
+    latency: float = 0.0
     timestamp: str
 
 class PacketCountUpdate(BaseModel):

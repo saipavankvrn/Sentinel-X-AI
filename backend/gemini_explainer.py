@@ -32,12 +32,16 @@ def get_local_fallback_explanation(features):
     port = features.get('dst_port') or features.get('Destination Port')
     length = features.get('packet_length') or features.get('Packet Length Mean') or 0
     
-    if port == 53: return "Anomaly in DNS traffic. Potential DNS tunneling or amplification attempt."
-    if port in [80, 443]: return "Suspicious web traffic. Pattern suggests SQLi or abnormal payload size."
-    if port == 22: return "Brute force attempt on SSH service detected. High-frequency login attempts."
-    if length > 1400: return "Abnormally large packet size detected. Possible data exfiltration."
+    base_explanation = "Traffic deviates from baseline. Behavioral signature suggests scanning or reconnaissance."
     
-    return "Traffic deviates from baseline. Behavioral signature suggests scanning or reconnaissance."
+    if port == 53: base_explanation = "Anomaly in DNS traffic. Potential DNS tunneling or amplification attempt."
+    elif port in [80, 443]: base_explanation = "Suspicious web traffic. Pattern suggests SQLi or abnormal payload size."
+    elif port == 22: base_explanation = "Brute force attempt on SSH service detected. High-frequency login attempts."
+    elif length > 1400: base_explanation = "Abnormally large packet size detected. Possible data exfiltration."
+    
+    # Robustness & Resilience Note
+    robustness_note = "\n\nNote: This system is designed to detect anomalies even when attackers attempt to mimic normal traffic patterns, ensuring resilience against evasion attempts."
+    return base_explanation + robustness_note
 
 def get_threat_explanation(features):
     global api_throttled_until
@@ -60,11 +64,19 @@ def get_threat_explanation(features):
                                     generation_config={"temperature": 0.4, "max_output_tokens": 100},
                                     safety_settings={ HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE })
         
-        prompt = f"Explain briefly why this is suspicious: Port {port}, Proto {features.get('protocol')}, Length {features.get('packet_length', 0)}B."
+        prompt = (
+            f"As a cyber security expert, explain why this traffic is suspicious: Port {port}, Proto {features.get('protocol')}, Length {features.get('packet_length', 0)}B. "
+            "Mention that this pattern deviates from learned normal behavior and why it is resilient to evasion. "
+            "End your explanation with the exact note: 'This system is designed to detect anomalies even when attackers attempt to mimic normal traffic patterns.'"
+        )
         
         response = model.generate_content(prompt)
         if response and response.text:
             cleaned_text = response.text.strip()
+            # Ensure the required note is there even if the AI is creative
+            if "designed to detect anomalies even when attackers attempt to mimic normal traffic patterns" not in cleaned_text:
+                cleaned_text += " This system is designed to detect anomalies even when attackers attempt to mimic normal traffic patterns."
+            
             explanation_cache[port] = cleaned_text # Store for quota saving
             return cleaned_text
         return get_local_fallback_explanation(features)

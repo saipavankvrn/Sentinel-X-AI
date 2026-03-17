@@ -1,4 +1,4 @@
-import requests
+import requests, time
 from datetime import datetime
 from scapy.all import sniff
 from feature_extractor import extract_features
@@ -15,6 +15,7 @@ blocked_ips = set()
 
 API_URL = "http://127.0.0.1:8001/alerts"
 STATS_URL = "http://127.0.0.1:8001/update_packet_count"
+LIVE_DATA_PATH = "c:/dummy/sentinal x/sentinel-x/dataset/live_learning.csv"
 
 # Global counter for network packets
 packet_counter = 0
@@ -25,6 +26,7 @@ def packet_callback(packet):
     """
     global packet_counter
     packet_counter += 1
+    start_time = time.time() # Start Latency Tracking
     
     # 1. Extract the required machine learning features
     features = extract_features(packet)
@@ -65,9 +67,13 @@ def packet_callback(packet):
         explainer_context = {**features, **flow_features}
         explanation = get_threat_explanation(explainer_context)
         
-        # 5. Send the alert to the FastAPI backend
-        alert_status = "BLOCKED" # We assume intent, or verify below
+        # 6. Activate the Response Engine to physically block the malicious IP
+        block_success = block_ip(src_ip)
         
+        # Calculate Latency (Time from capture to response trigger)
+        latency_ms = (time.time() - start_time) * 1000
+        print(f"Detection Latency: {latency_ms:.2f} ms")
+
         alert_data = {
             "source_ip": src_ip,
             "destination_ip": features.get("dst_ip", "Unknown"),
@@ -76,16 +82,9 @@ def packet_callback(packet):
             "alert_type": "THREAT_DETECTED",
             "status": "BLOCKED",
             "explanation": explanation,
+            "latency": latency_ms,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        
-        try:
-            requests.post(API_URL, json=alert_data, timeout=2)
-        except:
-            pass
-
-        # 6. Activate the Response Engine to physically block the malicious IP
-        block_success = block_ip(src_ip)
         
         if not block_success:
             # If blocking failed (e.g. no admin rights), update the alert status to WARNING
@@ -116,6 +115,38 @@ def packet_callback(packet):
                 requests.post(API_URL, json=alert_data, timeout=1)
             except:
                 pass
+    
+    # Adaptive Learning: Save features for future retraining
+    save_live_data(flow_features, 1 if prediction == "SUSPICIOUS" else 0)
+
+def save_live_data(features, label):
+    """
+    Appends live traffic features to a local CSV for adaptive learning.
+    """
+    import csv, os
+    file_exists = os.path.isfile(LIVE_DATA_PATH)
+    
+    # We only save these specific features to match the CICIDS training requirements
+    row_data = {
+        "Flow Duration": features.get("Flow Duration", 0),
+        "Total Fwd Packets": features.get("Total Fwd Packets", 0),
+        "Total Backward Packets": features.get("Total Backward Packets", 0),
+        "Packet Length Mean": features.get("Packet Length Mean", 0),
+        "Flow Bytes/s": features.get("Flow Bytes/s", 0),
+        "Protocol": features.get("Protocol", 0),
+        "Destination Port": features.get("Destination Port", 0),
+        "Label": label
+    }
+    
+    try:
+        with open(LIVE_DATA_PATH, 'a', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=row_data.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row_data)
+    except:
+        pass
+
 def start_sniffing(interface=None):
     """
     Starts packet sniffing on the specified network interface.

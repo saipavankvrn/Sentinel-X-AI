@@ -48,8 +48,9 @@ class DetectionEngine:
             self.features_list = self.config.get('features', [])
             print(f"Loaded model configuration with features: {self.features_list}")
         else:
-            self.features_list = ["Destination Port", "Flow Duration", "Total Fwd Packets", "Total Backward Packets", "Packet Length Mean", "Flow Bytes/s"]
-            print("Warning: Model config not found. Falling back to default CICIDS feature list.")
+            # Fallback must match the exact order in prepare_cicids.py
+            self.features_list = ["Flow Duration", "Total Fwd Packets", "Total Backward Packets", "Packet Length Mean", "Flow Bytes/s", "Protocol", "Destination Port"]
+            print("Warning: Model config not found. Using synchronized CICIDS feature list.")
             
     def predict(self, features):
         """

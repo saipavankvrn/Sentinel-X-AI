@@ -250,6 +250,10 @@ function App() {
                                 <strong style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>Trigger:</strong>
                                 <span style={{ color: '#e6edf3', fontWeight: '500' }}>{alert.alert_type}</span>
                               </div>
+                              <div style={{ minWidth: '120px' }}>
+                                <strong style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>⏱️ Latency:</strong>
+                                <span style={{ color: '#e6edf3', fontWeight: '500' }}>{alert.latency ? `${alert.latency.toFixed(2)} ms` : 'N/A'}</span>
+                              </div>
                               {alert.explanation && (
                                 <div style={{ flex: 1 }}>
                                   <strong style={{ color: '#a371f7', textTransform: 'uppercase', fontSize: '0.8rem', display: 'block', marginBottom: '6px' }}>🛡️ AI Analysis:</strong>
