@@ -13,7 +13,7 @@ Open **3 separate terminal windows** and paste the following blocks of code to i
 cd "C:\dummy\sentinal x\sentinel-x"
 .\venv\Scripts\activate
 cd backend
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8001
 ```
 
 **Terminal 2 (React Dashboard):**
@@ -64,7 +64,7 @@ It is highly recommended to run this project inside an isolated virtual environm
 With the virtual environment activated, install all the required Python libraries for the AI, Packet Sniffer, and Backend Server:
 
 ```powershell
-pip install fastapi uvicorn pydantic scapy scikit-learn pandas google-generativeai requests
+pip install fastapi uvicorn pydantic scapy scikit-learn pandas google-generativeai requests python-dotenv
 ```
 
 *(Note for Windows users: The live packet sniffer `scapy` requires **Npcap** to physically read your network card. If you install Wireshark on your computer, it comes with Npcap automatically).*
@@ -147,4 +147,24 @@ cd "C:\dummy\sentinal x\sentinel-x"
 .\venv\Scripts\activate
 python backend/packet_sniffer.py
 ```
+
+---
+
+## 🛠️ New Features
+
+### 🛡️ Real-Time IP Unblocking
+If Sentinel-X blocks a safe IP (False Positive), you can now unblock it directly from the dashboard:
+1. Click on a **BLOCKED** alert row in the table.
+2. Click the green **"Unblock IP"** button.
+3. The system will automatically remove the firewall rule from your Windows/Linux machine.
+
+### 📥 AI Security Reports
+You can now download your activity logs as professional documents:
+1. Click the **"Download Report"** button in the dashboard header.
+2. A Word-compatible `.doc` file will be generated containing the Executive Summary, live stats, and AI-powered threat analysis.
+
+### 🔑 Security (Environment Variables)
+For security, your Gemini API key is now stored in a `.env` file. 
+1. Create a file named `.env` in the root folder.
+2. Add your key: `GEMINI_API_KEY=your_key_here`
 "# Sentinal-x" 
